@@ -1,6 +1,7 @@
 import { DayPicker } from 'react-day-picker';
 import { es } from 'date-fns/locale';
 import { cn } from '/utils';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function Calendar({ selected, onSelect, disabled, className, ...props }) {
   return (
@@ -11,42 +12,52 @@ export function Calendar({ selected, onSelect, disabled, className, ...props }) 
         onSelect={onSelect}
         disabled={disabled}
         locale={es}
-        showOutsideDays={false}
+        showOutsideDays={true}
+        fixedWeeks
         className="w-full"
+        components={{
+          Chevron: ({ orientation }) => {
+            const Icon = orientation === 'left' ? ChevronLeft : ChevronRight;
+            return <Icon className="h-5 w-5" />;
+          },
+        }}
         classNames={{
           months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
           month: "space-y-4 w-full",
-          caption: "flex justify-center pt-1 relative items-center mb-4",
+          month_caption: "flex justify-center pt-1 relative items-center mb-4",
           caption_label: "text-base font-semibold text-text-primary",
-          nav: "space-x-1 flex items-center",
-          nav_button: cn(
-            "h-8 w-8 bg-transparent p-0 opacity-50 hover:opacity-100",
+          nav: "flex items-center",
+          nav_button_previous: cn(
+            "absolute left-1",
+            "h-9 w-9 bg-transparent p-0 ",
             "inline-flex items-center justify-center rounded-button",
-            "hover:bg-gray-100 transition-colors"
+            "transition-colors"
           ),
-          nav_button_previous: "absolute left-1",
-          nav_button_next: "absolute right-1",
-          table: "w-full border-collapse",
-          head_row: "flex w-full",
-          head_cell: "text-text-secondary rounded-button w-full font-normal text-sm flex-1",
-          row: "flex w-full mt-2",
-          cell: cn(
-            "relative p-0 text-center text-sm flex-1",
-            "focus-within:relative focus-within:z-20"
+          nav_button_next: cn(
+            "absolute right-1",
+            "h-9 w-9 bg-transparent p-0 ",
+            "inline-flex items-center justify-center rounded-button",
+            "transition-colors"
           ),
-          day: cn(
-            "h-10 w-full p-0 font-normal rounded-button",
+          month_grid: "w-full border-collapse mt-4",
+          weekdays: "flex justify-center",
+          weekday: "text-text-secondary w-12 font-medium text-sm text-center",
+          week: "flex w-full justify-center",
+          day: "relative p-0 text-center",
+          day_button: cn(
+            "h-10 w-10 p-0 font-semibold rounded-button mx-auto flex items-center justify-center",
             "hover:bg-accent-light hover:text-accent transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-accent"
+            "focus:outline-none focus:ring-2 focus:ring-accent",
+            "text-text-primary"
           ),
-          day_selected: "bg-accent text-white hover:bg-accent hover:text-white font-semibold",
-          day_today: "bg-gray-100 text-accent font-semibold",
-          day_outside: "text-text-secondary opacity-50",
-          day_disabled: "text-text-secondary opacity-30 cursor-not-allowed",
-          day_hidden: "invisible",
+          selected: "bg-accent text-white hover:bg-accent hover:text-white font-bold",
+          today: "bg-gray-100 text-accent font-bold border-2 border-accent",
+          outside: "text-text-secondary opacity-40",
+          disabled: "text-text-secondary opacity-20 cursor-not-allowed hover:bg-transparent",
+          hidden: "invisible",
         }}
         {...props}
       />
     </div>
   );
-}
+};

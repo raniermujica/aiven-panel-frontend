@@ -1,15 +1,16 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  * {
-    @apply border-border;
-  }
+@theme {
+  --color-background: #FAFAFA;
+  --color-surface: #FFFFFF;
+  --color-accent: #ec4899;
+  --color-accent-light: #fce7f3;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-border: #e5e7eb;
   
-  body {
-    @apply bg-background text-text-primary antialiased;
-  }
+  --radius-card: 12px;
+  --radius-button: 8px;
 }
 
 /* Scrollbar personalizado minimalista */

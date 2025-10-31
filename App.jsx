@@ -5,7 +5,7 @@ import { SelectDateTime } from './src/pages/SelectDateTime';
 import { AddOns } from './src/pages/AddOns';
 import { ClientDetails } from './src/pages/ClientDetails';
 import { Confirmation } from './src/pages/Confirmation';
-// import { Success } from './pages/Success';
+import { Success } from './src/pages/Success';
 
 function App() {
   return (
@@ -20,7 +20,7 @@ function App() {
           <Route path="/add-ons" element={<AddOns />} />
           <Route path="/client-details" element={<ClientDetails />} />
           <Route path="/confirmation" element={<Confirmation />} />
-          {/* <Route path="/success" element={<Success />} /> */}
+          <Route path="/success" element={<Success />} />
         </Routes>
       </div>
     </BrowserRouter>
