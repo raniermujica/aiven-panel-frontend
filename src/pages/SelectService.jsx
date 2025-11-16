@@ -3,75 +3,96 @@ import { useNavigate } from 'react-router-dom';
 import { ServiceCard } from '@/components/booking/ServiceCard';
 import { Button } from '@/components/ui/button';
 import { useBookingStore } from '@/store/bookingStore';
-import { Sparkles } from 'lucide-react';
-
-// Mock de servicios - luego se obtendrán del backend
-const MOCK_SERVICES = [
-  {
-    id: '1',
-    name: 'Corte de Cabello',
-    description: 'Corte personalizado con lavado y secado incluido',
-    duration_minutes: 45,
-    price: 35,
-    emoji: '✂️',
-  },
-  {
-    id: '2',
-    name: 'Tinte Completo',
-    description: 'Coloración completa con productos de alta calidad',
-    duration_minutes: 90,
-    price: 65,
-    emoji: '🎨',
-  },
-  {
-    id: '3',
-    name: 'Manicura y Pedicura',
-    description: 'Cuidado completo de manos y pies',
-    duration_minutes: 60,
-    price: 45,
-    emoji: '💅',
-  },
-  {
-    id: '4',
-    name: 'Tratamiento Facial',
-    description: 'Limpieza profunda e hidratación facial',
-    duration_minutes: 60,
-    price: 55,
-    emoji: '✨',
-  },
-  {
-    id: '5',
-    name: 'Masaje Relajante',
-    description: 'Masaje terapéutico de cuerpo completo',
-    duration_minutes: 60,
-    price: 50,
-    emoji: '💆',
-  },
-  {
-    id: '6',
-    name: 'Depilación Láser',
-    description: 'Sesión de depilación láser en zona a elegir',
-    duration_minutes: 30,
-    price: 40,
-    emoji: '⚡',
-  },
-];
+import { api } from '@/services/api';
+import { Sparkles, AlertCircle } from 'lucide-react';
 
 export function SelectService() {
   const navigate = useNavigate();
-  const { selectedService, setSelectedService } = useBookingStore();
+  const { selectedService, setService, businessSlug } = useBookingStore();
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [localSelected, setLocalSelected] = useState(selectedService);
+
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getServices(businessSlug);
+      setServices(data.services || []);
+    } catch (err) {
+      console.error('Error cargando servicios:', err);
+      setError('No se pudieron cargar los servicios. Intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSelectService = (service) => {
     setLocalSelected(service);
   };
-
   const handleContinue = () => {
+    console.log('🔍 handleContinue called');
+    console.log('🔍 localSelected:', localSelected);
     if (localSelected) {
-      setSelectedService(localSelected);
-      navigate('/date-time');
+      setService(localSelected);
+      console.log('🔍 Navigating to /add-ons');
+      navigate('/add-ons');
+    } else {
+      console.log('❌ No service selected');
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pt-32">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-text-secondary">Cargando servicios...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pt-32">
+        <div className="text-center max-w-md mx-auto px-6">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
+            Error al cargar servicios
+          </h2>
+          <p className="text-text-secondary mb-6">{error}</p>
+          <Button onClick={loadServices}>
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (services.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center pt-32">
+        <div className="text-center max-w-md mx-auto px-6">
+          <Sparkles className="w-16 h-16 text-text-secondary mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
+            No hay servicios disponibles
+          </h2>
+          <p className="text-text-secondary">
+            Por favor, contacta con el negocio.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
@@ -89,9 +110,9 @@ export function SelectService() {
           </p>
         </div>
 
-        {/* Services grid */}
+        {/* Services list */}
         <div className="space-y-4 mb-8">
-          {MOCK_SERVICES.map((service) => (
+          {services.map((service) => (
             <ServiceCard
               key={service.id}
               service={service}
@@ -115,4 +136,4 @@ export function SelectService() {
       </div>
     </div>
   );
-}
+};

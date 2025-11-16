@@ -12,14 +12,10 @@ class APIService {
     });
   }
 
-  // Obtener servicios del negocio
+  // Obtener servicios del negocio 
   async getServices(businessSlug) {
     try {
-      const response = await this.client.get('/api/services', {
-        headers: {
-          'x-business-slug': businessSlug,
-        },
-      });
+      const response = await this.client.get(`/api/public/${businessSlug}/services`);
       return response.data;
     } catch (error) {
       console.error('Error obteniendo servicios:', error);
@@ -27,20 +23,26 @@ class APIService {
     }
   }
 
-  // Verificar disponibilidad de horarios
+  // Obtener información del negocio
+async getBusinessInfo(businessSlug) {
+  try {
+    const response = await this.client.get(`/api/public/${businessSlug}/info`);
+    return response.data;
+  } catch (error) {
+    console.error('Error obteniendo info del negocio:', error);
+    throw error;
+  }
+}
+
+  // Verificar disponibilidad de horarios 
   async checkAvailability(businessSlug, date, serviceId, durationMinutes) {
     try {
       const response = await this.client.post(
-        '/api/appointments/check-availability',
+        `/api/public/${businessSlug}/check-availability`,
         {
           date,
           serviceId,
           durationMinutes,
-        },
-        {
-          headers: {
-            'x-business-slug': businessSlug,
-          },
         }
       );
       return response.data;
@@ -50,23 +52,32 @@ class APIService {
     }
   }
 
-  // Crear cita
+  // Crear cita 
   async createAppointment(businessSlug, appointmentData) {
-    try {
-      const response = await this.client.post(
-        '/api/appointments',
-        appointmentData,
-        {
-          headers: {
-            'x-business-slug': businessSlug,
-          },
-        }
-      );
-      return response.data;
-    } catch (error) {
-      console.error('Error creando cita:', error);
-      throw error;
-    }
+ try {
+    // Preparar el payload con el formato correcto
+    const payload = {
+      clientName: appointmentData.customerName,
+      clientPhone: appointmentData.customerPhone,
+      clientEmail: appointmentData.customerEmail,
+      serviceId: appointmentData.serviceId,
+      serviceName: appointmentData.serviceName,  
+      durationMinutes: appointmentData.durationMinutes, 
+      scheduledDate: `${appointmentData.date}T${appointmentData.time}:00`,
+      appointmentTime: `${appointmentData.date}T${appointmentData.time}:00`,
+      services: appointmentData.additionalServices || [], 
+      notes: appointmentData.notes || '',
+    };
+
+    const response = await this.client.post(
+      `/api/public/${businessSlug}/appointments`,
+      payload
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error creando cita:', error);
+    throw error;
+  }
   }
 }
 

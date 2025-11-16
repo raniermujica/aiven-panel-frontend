@@ -1,29 +1,44 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Header } from './src/components/booking/Header';
-import { SelectService } from './src/pages/SelectService';
-import { SelectDateTime } from './src/pages/SelectDateTime';
-import { AddOns } from './src/pages/AddOns';
-import { ClientDetails } from './src/pages/ClientDetails';
-import { Confirmation } from './src/pages/Confirmation';
-import { Success } from './src/pages/Success';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Header } from '@/components/booking/Header';
+import { SelectService } from '@/pages/SelectService';
+import { SelectDateTime } from '@/pages/SelectDateTime';
+import { AddOns } from '@/pages/AddOns';
+import { ClientDetails } from '@/pages/ClientDetails';
+import { Success } from '@/pages/Success';
+import { useBookingStore } from '@/store/bookingStore';
+import { api } from '@/services/api';
 
 function App() {
+  const { businessSlug, setBusinessData } = useBookingStore();
+
+  useEffect(() => {
+    loadBusinessData();
+  }, []);
+
+  const loadBusinessData = async () => {
+    try {
+      const response = await api.getBusinessInfo(businessSlug);
+      setBusinessData(response.business);
+    } catch (error) {
+      console.error('Error cargando datos del negocio:', error);
+    }
+  };
+
   return (
-    <BrowserRouter>
+    <Router>
       <div className="min-h-screen bg-background">
         <Header />
-
         <Routes>
-          <Route path="/" element={<Navigate to="/services" replace />} />
+          <Route path="/" element={<SelectService />} />
           <Route path="/services" element={<SelectService />} />
-          <Route path="/date-time" element={<SelectDateTime />} />
           <Route path="/add-ons" element={<AddOns />} />
+          <Route path="/date-time" element={<SelectDateTime />} />
           <Route path="/client-details" element={<ClientDetails />} />
-          <Route path="/confirmation" element={<Confirmation />} />
           <Route path="/success" element={<Success />} />
         </Routes>
       </div>
-    </BrowserRouter>
+    </Router>
   );
 }
 

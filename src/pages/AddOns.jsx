@@ -5,86 +5,57 @@ import { Textarea } from '@/components/ui/textarea';
 import { ServiceCard } from '@/components/booking/ServiceCard';
 import { AdditionalServiceCard } from '@/components/booking/AdditionalServiceCard';
 import { useBookingStore } from '@/store/bookingStore';
-import { Plus, FileText } from 'lucide-react';
-
-// Mock de servicios - reutilizamos los mismos del Paso 1
-const MOCK_SERVICES = [
-  {
-    id: '1',
-    name: 'Corte de Cabello',
-    description: 'Corte personalizado con lavado y secado incluido',
-    duration_minutes: 45,
-    price: 35,
-    emoji: '✂️',
-  },
-  {
-    id: '2',
-    name: 'Tinte Completo',
-    description: 'Coloración completa con productos de alta calidad',
-    duration_minutes: 90,
-    price: 65,
-    emoji: '🎨',
-  },
-  {
-    id: '3',
-    name: 'Manicura y Pedicura',
-    description: 'Cuidado completo de manos y pies',
-    duration_minutes: 60,
-    price: 45,
-    emoji: '💅',
-  },
-  {
-    id: '4',
-    name: 'Tratamiento Facial',
-    description: 'Limpieza profunda e hidratación facial',
-    duration_minutes: 60,
-    price: 55,
-    emoji: '✨',
-  },
-  {
-    id: '5',
-    name: 'Masaje Relajante',
-    description: 'Masaje terapéutico de cuerpo completo',
-    duration_minutes: 60,
-    price: 50,
-    emoji: '💆',
-  },
-  {
-    id: '6',
-    name: 'Depilación Láser',
-    description: 'Sesión de depilación láser en zona a elegir',
-    duration_minutes: 30,
-    price: 40,
-    emoji: '⚡',
-  },
-];
+import { api } from '@/services/api';
+import { Plus, FileText, AlertCircle } from 'lucide-react';
 
 export function AddOns() {
   const navigate = useNavigate();
   const { 
     selectedService, 
-    selectedDate, 
-    selectedTime,
     additionalServices,
     notes,
     addAdditionalService,
     removeAdditionalService,
     setNotes,
-    proceedToClientDetails 
+    businessSlug
   } = useBookingStore();
 
   const [showServiceSelector, setShowServiceSelector] = useState(false);
   const [localNotes, setLocalNotes] = useState(notes);
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Redirigir si no hay servicio o fecha/hora seleccionados
+  // Redirigir SOLO si no hay servicio seleccionado
   useEffect(() => {
-    if (!selectedService || !selectedDate || !selectedTime) {
+    if (!selectedService) {
       navigate('/services');
     }
-  }, [selectedService, selectedDate, selectedTime, navigate]);
+  }, [selectedService, navigate]);
+
+  // Cargar servicios cuando se abre el selector
+  useEffect(() => {
+    if (showServiceSelector && services.length === 0) {
+      loadServices();
+    }
+  }, [showServiceSelector]);
+
+  const loadServices = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await api.getServices(businessSlug);
+      setServices(data.services || []);
+    } catch (err) {
+      console.error('Error cargando servicios:', err);
+      setError('No se pudieron cargar los servicios');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtrar servicios ya seleccionados
-  const availableServices = MOCK_SERVICES.filter(
+  const availableServices = services.filter(
     service => 
       service.id !== selectedService?.id && 
       !additionalServices.some(s => s.id === service.id)
@@ -101,14 +72,12 @@ export function AddOns() {
 
   const handleContinue = () => {
     setNotes(localNotes);
-    proceedToClientDetails();
-    navigate('/client-details');
+    navigate('/date-time');
   };
 
   const handleSkip = () => {
     setNotes('');
-    proceedToClientDetails();
-    navigate('/client-details');
+    navigate('/date-time');
   };
 
   return (
@@ -149,6 +118,7 @@ export function AddOns() {
           {/* Add service button */}
           {!showServiceSelector ? (
             <Button
+              type="button"
               variant="outline"
               onClick={() => setShowServiceSelector(true)}
               className="w-full"
@@ -164,6 +134,7 @@ export function AddOns() {
                   Selecciona un servicio adicional
                 </h4>
                 <button
+                  type="button"
                   onClick={() => setShowServiceSelector(false)}
                   className="text-sm text-text-secondary hover:text-text-primary"
                 >
@@ -171,19 +142,29 @@ export function AddOns() {
                 </button>
               </div>
 
-              {availableServices.length > 0 ? (
-                <div className="space-y-3">
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-4 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-sm text-text-secondary">Cargando servicios...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                  <p className="text-sm text-red-600">{error}</p>
+                </div>
+              ) : availableServices.length > 0 ? (
+                <div className="space-y-3 max-h-96 overflow-y-auto">
                   {availableServices.map((service) => (
                     <ServiceCard
                       key={service.id}
                       service={service}
                       selected={false}
-                      onSelect={handleAddService}
+                      onSelect={() => handleAddService(service)}
                     />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 bg-surface rounded-card border border-border">
+                <div className="text-center py-8">
                   <p className="text-text-secondary">
                     No hay más servicios disponibles para agregar
                   </p>
@@ -195,39 +176,40 @@ export function AddOns() {
 
         {/* Notes section */}
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <FileText className="w-5 h-5 text-text-secondary" />
+          <div className="flex items-center gap-2 mb-3">
+            <FileText className="w-5 h-5 text-accent" />
             <h3 className="text-lg font-semibold text-text-primary">
-              Notas para el Profesional
+              Notas adicionales
             </h3>
-            <span className="text-sm text-text-secondary">(Opcional)</span>
           </div>
-
+          <p className="text-sm text-text-secondary mb-3">
+            ¿Tienes alguna preferencia o solicitud especial?
+          </p>
           <Textarea
             value={localNotes}
             onChange={(e) => setLocalNotes(e.target.value)}
-            placeholder="Ejemplo: Prefiero que el masaje sea más suave en la zona lumbar, tengo sensibilidad ahí..."
-            rows={4}
+            placeholder="Ejemplo: Prefiero un profesional con experiencia en..."
+            className="min-h-[100px]"
           />
-          <p className="mt-2 text-xs text-text-secondary">
-            Aquí puedes indicar preferencias, alergias, o cualquier información relevante
-          </p>
         </div>
 
         {/* Action buttons */}
-        <div className="space-y-3 sticky bottom-6">
+        <div className="space-y-3">
           <Button
+            type="button"
             onClick={handleContinue}
             className="w-full shadow-lg"
             size="lg"
           >
             Continuar
           </Button>
-          
+
           <Button
+            type="button"
             onClick={handleSkip}
-            variant="ghost"
+            variant="outline"
             className="w-full"
+            size="lg"
           >
             Saltar este paso
           </Button>

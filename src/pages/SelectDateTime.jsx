@@ -1,65 +1,66 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar } from '@/components/ui/calendar';
-import { TimeSlot } from '@/components/booking/TimeSlot';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import { useBookingStore } from '@/store/bookingStore';
-import { format, addDays, isBefore, startOfDay } from 'date-fns';
+import { api } from '@/services/api';
+import { CalendarDays, Clock, AlertCircle } from 'lucide-react';
+import { format, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { CalendarDays, Clock } from 'lucide-react';
-
-// Mock de horarios disponibles - luego vendrá del backend
-const MOCK_MORNING_SLOTS = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00'];
-const MOCK_AFTERNOON_SLOTS = ['16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
 
 export function SelectDateTime() {
   const navigate = useNavigate();
-  const { selectedService, selectedDate, selectedTime, setDateTime } = useBookingStore();
-  
-  const [localDate, setLocalDate] = useState(selectedDate || null);
-  const [localTime, setLocalTime] = useState(selectedTime || null);
-  const [availableSlots, setAvailableSlots] = useState({
-    morning: MOCK_MORNING_SLOTS,
-    afternoon: MOCK_AFTERNOON_SLOTS,
-  });
-  const [loading, setLoading] = useState(false);
+  const { 
+    selectedService,
+    additionalServices, // ← USAR para calcular duración
+    setDateTime, 
+    businessSlug 
+  } = useBookingStore();
 
-  // Redirigir si no hay servicio seleccionado
+  const [localDate, setLocalDate] = useState(null);
+  const [localTime, setLocalTime] = useState(null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Redirigir si no hay servicio
   useEffect(() => {
     if (!selectedService) {
       navigate('/services');
     }
   }, [selectedService, navigate]);
 
-  // Cuando se selecciona una fecha, cargar horarios disponibles
+  // Calcular duración total
+  const totalDuration = selectedService?.duration_minutes + 
+    (additionalServices?.reduce((sum, s) => sum + s.duration_minutes, 0) || 0);
+
+  // Cargar horarios cuando se selecciona una fecha
   useEffect(() => {
-    if (localDate) {
-      loadAvailableSlots(localDate);
+    if (localDate && selectedService) {
+      loadAvailableSlots();
     }
   }, [localDate]);
 
-  const loadAvailableSlots = async (date) => {
-    setLoading(true);
+  const loadAvailableSlots = async () => {
     try {
-      // TODO: Llamar al backend para obtener horarios reales
-      // const response = await api.checkAvailability(
-      //   'bella-estetica-demo',
-      //   format(date, 'yyyy-MM-dd'),
-      //   selectedService.id,
-      //   selectedService.duration_minutes
-      // );
+      setLoading(true);
+      setError(null);
+      setLocalTime(null);
+
+      const dateStr = format(localDate, 'yyyy-MM-dd');
       
-      // Por ahora usamos mock data
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simular carga
-      
-      // Simular algunos horarios ocupados
-      const occupiedSlots = ['10:00', '17:00', '18:30'];
-      setAvailableSlots({
-        morning: MOCK_MORNING_SLOTS.filter(slot => !occupiedSlots.includes(slot)),
-        afternoon: MOCK_AFTERNOON_SLOTS.filter(slot => !occupiedSlots.includes(slot)),
-      });
-    } catch (error) {
-      console.error('Error cargando horarios:', error);
+      const data = await api.checkAvailability(
+        businessSlug,
+        dateStr,
+        selectedService.id,
+        totalDuration // ← ENVIAR duración total
+      );
+
+      setAvailableSlots(data.availableSlots || []);
+    } catch (err) {
+      console.error('Error cargando horarios:', err);
+      setError('No se pudieron cargar los horarios disponibles');
+      setAvailableSlots([]);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export function SelectDateTime() {
 
   const handleDateSelect = (date) => {
     setLocalDate(date);
-    setLocalTime(null); // Reset time when date changes
+    setLocalTime(null);
   };
 
   const handleTimeSelect = (time) => {
@@ -77,11 +78,10 @@ export function SelectDateTime() {
   const handleContinue = () => {
     if (localDate && localTime) {
       setDateTime(localDate, localTime);
-      navigate('/add-ons');
+      navigate('/client-details'); // ← Ir a client-details
     }
   };
 
-  // Deshabilitar fechas pasadas
   const disabledDays = {
     before: startOfDay(new Date()),
   };
@@ -102,21 +102,31 @@ export function SelectDateTime() {
           </p>
         </div>
 
-        {/* Selected service recap */}
+        {/* Services recap */}
         <div className="mb-6 p-4 bg-accent-light/50 border border-accent/20 rounded-card">
-          <p className="text-sm text-text-secondary mb-1">Servicio seleccionado:</p>
-          <p className="font-semibold text-text-primary">{selectedService?.name}</p>
-          <p className="text-sm text-text-secondary mt-1">
-            Duración: {selectedService?.duration_minutes} minutos
+          <p className="text-sm text-text-secondary mb-2">Servicios seleccionados:</p>
+          <div className="space-y-1">
+            <p className="font-semibold text-text-primary">• {selectedService?.name}</p>
+            {additionalServices?.map(service => (
+              <p key={service.id} className="font-semibold text-text-primary">
+                • {service.name}
+              </p>
+            ))}
+          </div>
+          <p className="text-sm text-text-secondary mt-2">
+            Duración total: {totalDuration} minutos
           </p>
         </div>
 
         {/* Calendar */}
         <div className="bg-surface rounded-card border border-border shadow-sm mb-6">
           <Calendar
+            mode="single"
             selected={localDate}
             onSelect={handleDateSelect}
             disabled={disabledDays}
+            locale={es}
+            className="p-4"
           />
         </div>
 
@@ -133,65 +143,47 @@ export function SelectDateTime() {
             </div>
 
             {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
-                <p className="mt-4 text-text-secondary">Cargando horarios disponibles...</p>
+              <div className="text-center py-8">
+                <div className="w-8 h-8 border-4 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-3" />
+                <p className="text-sm text-text-secondary">Cargando horarios...</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
+                <p className="text-sm text-red-600 mb-4">{error}</p>
+                <Button variant="outline" onClick={loadAvailableSlots} size="sm">
+                  Reintentar
+                </Button>
+              </div>
+            ) : availableSlots.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                {availableSlots.map((slot) => (
+                  <button
+                    key={slot}
+                    onClick={() => handleTimeSelect(slot)}
+                    className={`
+                      p-3 rounded-button border-2 transition-all text-sm font-medium
+                      ${localTime === slot
+                        ? 'border-accent bg-accent text-white'
+                        : 'border-border bg-surface text-text-primary hover:border-accent/50 hover:bg-accent-light/30'
+                      }
+                    `}
+                  >
+                    <Clock className="w-4 h-4 mx-auto mb-1" />
+                    {slot}
+                  </button>
+                ))}
               </div>
             ) : (
-              <>
-                {/* Morning slots */}
-                {availableSlots.morning.length > 0 && (
-                  <div className="bg-surface rounded-card border border-border p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock className="w-5 h-5 text-text-secondary" />
-                      <h3 className="font-semibold text-text-primary">Turno Mañana</h3>
-                    </div>
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                      {availableSlots.morning.map((time) => (
-                        <TimeSlot
-                          key={time}
-                          time={time}
-                          available={true}
-                          selected={localTime === time}
-                          onSelect={handleTimeSelect}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Afternoon slots */}
-                {availableSlots.afternoon.length > 0 && (
-                  <div className="bg-surface rounded-card border border-border p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Clock className="w-5 h-5 text-text-secondary" />
-                      <h3 className="font-semibold text-text-primary">Turno Tarde</h3>
-                    </div>
-                    <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-                      {availableSlots.afternoon.map((time) => (
-                        <TimeSlot
-                          key={time}
-                          time={time}
-                          available={true}
-                          selected={localTime === time}
-                          onSelect={handleTimeSelect}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {availableSlots.morning.length === 0 && availableSlots.afternoon.length === 0 && (
-                  <div className="text-center py-12 bg-surface rounded-card border border-border">
-                    <p className="text-text-secondary">
-                      No hay horarios disponibles para este día.
-                    </p>
-                    <p className="text-sm text-text-secondary mt-2">
-                      Por favor, selecciona otra fecha.
-                    </p>
-                  </div>
-                )}
-              </>
+              <div className="text-center py-8">
+                <Clock className="w-12 h-12 text-text-secondary mx-auto mb-3 opacity-50" />
+                <p className="font-medium text-text-primary mb-1">
+                  No hay horarios disponibles
+                </p>
+                <p className="text-sm text-text-secondary">
+                  Por favor, selecciona otra fecha.
+                </p>
+              </div>
             )}
           </div>
         )}

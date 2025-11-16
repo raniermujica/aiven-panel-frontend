@@ -3,18 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useBookingStore } from '@/store/bookingStore';
-import { User, Mail, Phone } from 'lucide-react';
+import { api } from '@/services/api';
+import { User, Mail, Phone, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export function ClientDetails() {
   const navigate = useNavigate();
-  const { 
+  const {
     selectedService,
     selectedDate,
     selectedTime,
+    additionalServices,
+    notes,
     clientName,
     clientPhone,
     clientEmail,
-    setClientDetails 
+    setClientDetails,
+    businessSlug,
+    resetBooking
   } = useBookingStore();
 
   const [formData, setFormData] = useState({
@@ -25,6 +32,8 @@ export function ClientDetails() {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   // Redirigir si no hay datos previos
   useEffect(() => {
@@ -39,19 +48,19 @@ export function ClientDetails() {
         if (!value.trim()) return 'El nombre es requerido';
         if (value.trim().length < 2) return 'El nombre debe tener al menos 2 caracteres';
         return '';
-      
+
       case 'phone':
         if (!value.trim()) return 'El teléfono es requerido';
         const phoneRegex = /^[+]?[\d\s()-]{9,}$/;
         if (!phoneRegex.test(value)) return 'Formato de teléfono inválido';
         return '';
-      
+
       case 'email':
         if (!value.trim()) return 'El email es requerido';
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) return 'Formato de email inválido';
         return '';
-      
+
       default:
         return '';
     }
@@ -60,50 +69,103 @@ export function ClientDetails() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Validar solo si el campo ya fue tocado
+
     if (touched[name]) {
-      const error = validateField(name, value);
-      setErrors(prev => ({ ...prev, [name]: error }));
+      setErrors(prev => ({
+        ...prev,
+        [name]: validateField(name, value)
+      }));
     }
   };
 
   const handleBlur = (e) => {
     const { name, value } = e.target;
     setTouched(prev => ({ ...prev, [name]: true }));
-    
-    const error = validateField(name, value);
-    setErrors(prev => ({ ...prev, [name]: error }));
+    setErrors(prev => ({
+      ...prev,
+      [name]: validateField(name, value)
+    }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validar todos los campos
+  const validateForm = () => {
     const newErrors = {
       name: validateField('name', formData.name),
       phone: validateField('phone', formData.phone),
       email: validateField('email', formData.email),
     };
-    
+
     setErrors(newErrors);
     setTouched({ name: true, phone: true, email: true });
-    
-    // Si hay errores, no continuar
-    if (Object.values(newErrors).some(error => error)) {
-      return;
-    }
-    
-    // Guardar datos y continuar
-    setClientDetails(formData.name, formData.phone, formData.email);
-    navigate('/confirmation');
+
+    return !Object.values(newErrors).some(error => error);
   };
 
-  const isFormValid = 
-    formData.name.trim() && 
-    formData.phone.trim() && 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setSubmitError(null);
+
+      // Guardar datos del cliente en el store
+      setClientDetails(formData.name, formData.phone, formData.email);
+
+      // Preparar datos de la cita
+      const appointmentData = {
+        customerName: formData.name,
+        customerPhone: formData.phone,
+        customerEmail: formData.email,
+        serviceId: selectedService.id,
+        serviceName: selectedService.name,           
+        durationMinutes: selectedService.duration_minutes, 
+        date: format(selectedDate, 'yyyy-MM-dd'),
+        time: selectedTime,
+        notes: notes || '',
+        additionalServices: additionalServices.map(s => ({
+          id: s.id,
+          name: s.name,
+          duration_minutes: s.duration_minutes
+        })),
+      };
+
+      // Crear la cita
+      const response = await api.createAppointment(businessSlug, appointmentData);
+
+      // Redirigir a página de éxito
+      navigate('/success', {
+        state: {
+          appointmentId: response.appointment?.id,
+          appointmentData: response.appointment
+        }
+      });
+
+      // Limpiar el store después de un tiempo
+      setTimeout(() => {
+        resetBooking();
+      }, 1000);
+
+    } catch (error) {
+      console.error('Error creando cita:', error);
+      setSubmitError(
+        error.response?.data?.message ||
+        'Error al crear la cita. Por favor, intenta de nuevo.'
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isFormValid =
+    formData.name.trim() &&
+    formData.phone.trim() &&
     formData.email.trim() &&
-    !Object.values(errors).some(error => error);
+    !errors.name &&
+    !errors.phone &&
+    !errors.email;
 
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
@@ -117,81 +179,116 @@ export function ClientDetails() {
             Tus datos de contacto
           </h2>
           <p className="text-text-secondary">
-            Necesitamos esta información para confirmar tu cita
+            Necesitamos tu información para confirmar la cita
           </p>
         </div>
 
-        {/* Form */}
+        {/* Resumen de la reserva */}
+        <div className="mb-8 p-4 bg-accent-light/50 border border-accent/20 rounded-card">
+          <p className="text-sm font-medium text-text-primary mb-2">Resumen de tu reserva:</p>
+          <div className="space-y-1 text-sm text-text-secondary">
+            <p>📅 {format(selectedDate, "EEEE, d 'de' MMMM", { locale: es })}</p>
+            <p>🕐 {selectedTime}</p>
+            <p>✂️ {selectedService?.name}</p>
+            {additionalServices.length > 0 && (
+              <p className="mt-2">
+                + {additionalServices.length} servicio(s) adicional(es)
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Error de envío */}
+        {submitError && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-card">
+            <p className="text-sm text-red-600">{submitError}</p>
+          </div>
+        )}
+
+        {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-surface rounded-card border border-border p-6 space-y-5">
-            {/* Name field */}
-            <div>
+          {/* Nombre */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Nombre completo *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
               <Input
                 type="text"
                 name="name"
-                label="Nombre completo"
-                placeholder="Ej: María García López"
                 value={formData.name}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                error={touched.name && errors.name}
-                required
+                placeholder="Tu nombre"
+                className={`pl-10 ${errors.name && touched.name ? 'border-red-500' : ''}`}
               />
             </div>
+            {errors.name && touched.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            )}
+          </div>
 
-            {/* Phone field */}
-            <div>
+          {/* Teléfono */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Teléfono *
+            </label>
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
               <Input
                 type="tel"
                 name="phone"
-                label="Teléfono"
-                placeholder="Ej: +34 612 345 678"
                 value={formData.phone}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                error={touched.phone && errors.phone}
-                required
+                placeholder="+34 600 000 000"
+                className={`pl-10 ${errors.phone && touched.phone ? 'border-red-500' : ''}`}
               />
-              <p className="mt-1.5 text-xs text-text-secondary">
-                Usaremos este número para enviarte recordatorios de tu cita
-              </p>
             </div>
+            {errors.phone && touched.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+            )}
+          </div>
 
-            {/* Email field */}
-            <div>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-text-primary mb-2">
+              Email *
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
               <Input
                 type="email"
                 name="email"
-                label="Email"
-                placeholder="Ej: maria@ejemplo.com"
                 value={formData.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                error={touched.email && errors.email}
-                required
+                placeholder="tu@email.com"
+                className={`pl-10 ${errors.email && touched.email ? 'border-red-500' : ''}`}
               />
-              <p className="mt-1.5 text-xs text-text-secondary">
-                Te enviaremos la confirmación a este correo
-              </p>
             </div>
-          </div>
-
-          {/* Info box */}
-          <div className="bg-accent-light/30 border border-accent/20 rounded-card p-4">
-            <p className="text-sm text-text-secondary">
-              💡 <span className="font-medium text-text-primary">Tu información está segura.</span> Solo la usaremos para gestionar tu cita y enviarte recordatorios.
-            </p>
+            {errors.email && touched.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+            )}
           </div>
 
           {/* Submit button */}
-          <div className="sticky bottom-6">
+          <div className="sticky bottom-6 pt-4">
             <Button
               type="submit"
-              disabled={!isFormValid}
+              disabled={!isFormValid || submitting}
               className="w-full shadow-lg"
               size="lg"
             >
-              Continuar a confirmación
+              {submitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Creando reserva...
+                </>
+              ) : (
+                'Confirmar reserva'
+              )}
             </Button>
           </div>
         </form>
