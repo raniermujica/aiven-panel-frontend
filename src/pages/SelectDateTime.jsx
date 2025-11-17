@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { CalendarDays, Clock, AlertCircle } from 'lucide-react';
+import { CalendarDays, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -89,6 +89,17 @@ export function SelectDateTime() {
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
+        
+         {/* Botón Atrás */}
+        <button
+          type="button"
+          onClick={() => navigate('/add-ons')}
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm font-medium">Volver</span>
+        </button>
+
         {/* Intro section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">

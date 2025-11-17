@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { User, Mail, Phone, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, Loader2, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -170,6 +170,17 @@ export function ClientDetails() {
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
+
+        {/* Botón Atrás */}
+        <button
+          type="button"
+          onClick={() => navigate('/date-time')}
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm font-medium">Volver a horarios</span>
+        </button>
+
         {/* Intro section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">

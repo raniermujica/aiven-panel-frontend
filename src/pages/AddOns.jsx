@@ -6,7 +6,8 @@ import { ServiceCard } from '@/components/booking/ServiceCard';
 import { AdditionalServiceCard } from '@/components/booking/AdditionalServiceCard';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { Plus, FileText, AlertCircle } from 'lucide-react';
+import { Plus, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
+
 
 export function AddOns() {
   const navigate = useNavigate();
@@ -83,6 +84,16 @@ export function AddOns() {
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
+        {/* Botón Atrás */}
+        <button
+          type="button"
+          onClick={() => navigate('/services')}
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          <span className="text-sm font-medium">Volver a servicios</span>
+        </button>
+        
         {/* Intro section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
