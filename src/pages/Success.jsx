@@ -9,7 +9,7 @@ import { useBookingStore } from '../store/bookingStore';
 export function Success() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { businessSlug, resetBooking } = useBookingStore(); 
+  const { businessSlug, resetBooking } = useBookingStore();
   const appointmentData = location.state?.appointmentData;
 
   // Redirigir si no hay datos de la cita
@@ -27,10 +27,13 @@ export function Success() {
   const appointmentDate = new Date(appointmentData.date || appointmentData.appointment_time);
   const appointmentTime = appointmentData.time || format(appointmentDate, 'HH:mm');
 
-  const handleNewBooking = () => {
-    resetBooking();
-    navigate(`/${businessSlug}/services`); 
-  };
+  // OBTENER TODOS LOS SERVICIOS
+  const services = appointmentData.services || [
+    {
+      name: appointmentData.service_name,
+      duration_minutes: appointmentData.duration_minutes
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
@@ -58,16 +61,25 @@ export function Success() {
           </h2>
 
           <div className="space-y-4">
-            {/* Servicio */}
+            {/* SERVICIOS (MÚLTIPLES) */}
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
                 <span className="text-xl">✂️</span>
               </div>
-              <div>
-                <p className="text-sm text-text-secondary">Servicio</p>
-                <p className="font-medium text-text-primary">
-                  {appointmentData.service_name || 'Servicio reservado'}
+              <div className="flex-1">
+                <p className="text-sm text-text-secondary">
+                  {services.length === 1 ? 'Servicio' : 'Servicios'}
                 </p>
+                {services.map((service, index) => (
+                  <p key={index} className="font-medium text-text-primary">
+                    {index > 0 && '+ '}{service.name}
+                    {service.duration_minutes && (
+                      <span className="text-sm text-text-secondary ml-2">
+                        ({service.duration_minutes} min)
+                      </span>
+                    )}
+                  </p>
+                ))}
               </div>
             </div>
 
@@ -95,14 +107,14 @@ export function Success() {
               </div>
             </div>
 
-            {/* Duración */}
+            {/* Duración total */}
             {appointmentData.duration_minutes && (
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
                   <Clock className="w-5 h-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm text-text-secondary">Duración</p>
+                  <p className="text-sm text-text-secondary">Duración total</p>
                   <p className="font-medium text-text-primary">
                     {appointmentData.duration_minutes} minutos
                   </p>
@@ -153,7 +165,7 @@ export function Success() {
         {/* Action buttons */}
         <div className="space-y-3">
           <Button
-            onClick={handleNewBooking} 
+            onClick={handleNewBooking}
             className="w-full"
             size="lg"
           >
@@ -161,7 +173,7 @@ export function Success() {
           </Button>
           
           <Button
-            onClick={() => window.location.href = `/${businessSlug}`} 
+            onClick={() => window.location.href = `/${businessSlug}`}
             variant="outline"
             className="w-full"
             size="lg"
