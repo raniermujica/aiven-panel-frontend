@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Header } from '@/components/booking/Header';
 import { SelectService } from '@/pages/SelectService';
@@ -6,17 +6,22 @@ import { SelectDateTime } from '@/pages/SelectDateTime';
 import { AddOns } from '@/pages/AddOns';
 import { ClientDetails } from '@/pages/ClientDetails';
 import { Success } from '@/pages/Success';
+import { NotFound } from '@/pages/NotFound';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
 
-function App() {
-  const { businessSlug, setBusinessData } = useBookingStore();
+function BookingApp() {
+  const { slug } = useParams();
+  const { setBusinessSlug, setBusinessData } = useBookingStore();
 
   useEffect(() => {
-    loadBusinessData();
-  }, []);
+    if (slug) {
+      setBusinessSlug(slug);
+      loadBusinessData(slug);
+    }
+  }, [slug]);
 
-  const loadBusinessData = async () => {
+  const loadBusinessData = async (businessSlug) => {
     try {
       const response = await api.getBusinessInfo(businessSlug);
       setBusinessData(response.business);
@@ -26,19 +31,28 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen bg-background">
-        <Header />
-        <Routes>
-          <Route path="/" element={<SelectService />} />
-          <Route path="/services" element={<SelectService />} />
-          <Route path="/add-ons" element={<AddOns />} />
-          <Route path="/date-time" element={<SelectDateTime />} />
-          <Route path="/client-details" element={<ClientDetails />} />
-          <Route path="/success" element={<Success />} />
-        </Routes>
-      </div>
-    </Router>
+    <div className="min-h-screen bg-background">
+      <Header />
+      <Routes>
+        <Route path="/" element={<SelectService />} />
+        <Route path="/services" element={<SelectService />} />
+        <Route path="/add-ons" element={<AddOns />} />
+        <Route path="/date-time" element={<SelectDateTime />} />
+        <Route path="/client-details" element={<ClientDetails />} />
+        <Route path="/success" element={<Success />} />
+      </Routes>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/:slug/*" element={<BookingApp />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

@@ -4,6 +4,7 @@ export const useBookingStore = create((set) => ({
   // Business data
   businessSlug: import.meta.env.VITE_BUSINESS_SLUG,
   businessData: null, 
+  etBusinessSlug: (slug) => set({ businessSlug: slug }),
   setBusinessData: (data) => set({ businessData: data }), 
 
   // Selected items
