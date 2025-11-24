@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/Textarea';
+import { Textarea } from '../components/ui/TextArea';
 import { ServiceCard } from '@/components/booking/ServiceCard';
 import { AdditionalServiceCard } from '@/components/booking/AdditionalServiceCard';
 import { useBookingStore } from '@/store/bookingStore';
