@@ -69,6 +69,7 @@ async getBusinessInfo(businessSlug) {
       appointmentTime: appointmentData.appointmentTime, 
       services: appointmentData.services || [],      
       notes: appointmentData.notes || '',
+      partySize: appointmentData.partySize || 1,
     };
 
     console.log('📤 Payload enviado:', payload);
