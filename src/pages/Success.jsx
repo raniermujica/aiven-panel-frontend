@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Calendar, Clock, Mail, Phone, Sparkles, Users } from 'lucide-react';
+import { CheckCircle, Calendar, Clock, Mail, Phone, Sparkles, Users, UtensilsCrossed } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useBookingStore } from '../store/bookingStore'; 
@@ -46,33 +46,41 @@ export function Success() {
           </div>
           
           <h1 className="text-3xl md:text-4xl font-bold text-text-primary mb-3">
-            ¡Reserva confirmada!
+            {isRestaurant ? '¡Reserva confirmada!' : '¡Reserva confirmada!'}
           </h1>
           
           <p className="text-lg text-text-secondary">
-            Tu cita ha sido agendada exitosamente
+            {isRestaurant 
+              ? 'Tu reserva ha sido agendada exitosamente' 
+              : 'Tu cita ha sido agendada exitosamente'
+            }
           </p>
         </div>
 
         <div className="bg-surface border border-border rounded-card shadow-sm p-6 mb-6">
           <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-accent" />
-            Detalles de tu cita
+            {isRestaurant ? 'Detalles de tu reserva' : 'Detalles de tu cita'}
           </h2>
 
           <div className="space-y-4">
+            {/* Servicio/Mesa */}
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
-                <span className="text-xl">✂️</span>
+                {isRestaurant ? (
+                  <UtensilsCrossed className="w-5 h-5 text-accent" />
+                ) : (
+                  <span className="text-xl">✂️</span>
+                )}
               </div>
               <div className="flex-1">
                 <p className="text-sm text-text-secondary">
-                  {services.length === 1 ? 'Servicio' : 'Servicios'}
+                  {isRestaurant ? 'Mesa' : (services.length === 1 ? 'Servicio' : 'Servicios')}
                 </p>
                 {services.map((service, index) => (
                   <p key={index} className="font-medium text-text-primary">
                     {index > 0 && '+ '}{service.name}
-                    {service.duration_minutes && (
+                    {!isRestaurant && service.duration_minutes && (
                       <span className="text-sm text-text-secondary ml-2">
                         ({service.duration_minutes} min)
                       </span>
@@ -82,6 +90,7 @@ export function Success() {
               </div>
             </div>
 
+            {/* Número de personas (solo restaurantes) */}
             {isRestaurant && appointmentData.party_size && (
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
@@ -96,6 +105,7 @@ export function Success() {
               </div>
             )}
 
+            {/* Fecha */}
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
                 <Calendar className="w-5 h-5 text-accent" />
@@ -108,6 +118,7 @@ export function Success() {
               </div>
             </div>
 
+            {/* Hora */}
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
                 <Clock className="w-5 h-5 text-accent" />
@@ -118,7 +129,8 @@ export function Success() {
               </div>
             </div>
 
-            {appointmentData.duration_minutes && (
+            {/* Duración total (solo beauty) */}
+            {!isRestaurant && appointmentData.duration_minutes && (
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-accent-light rounded-button flex items-center justify-center flex-shrink-0">
                   <Clock className="w-5 h-5 text-accent" />
@@ -134,6 +146,7 @@ export function Success() {
           </div>
         </div>
 
+        {/* Contact info card */}
         <div className="bg-accent-light/30 border border-accent/20 rounded-card p-6 mb-8">
           <h3 className="font-semibold text-text-primary mb-3">
             📧 Confirmación enviada
@@ -163,20 +176,22 @@ export function Success() {
           </div>
         </div>
 
+        {/* Info adicional */}
         <div className="bg-blue-50 border border-blue-200 rounded-card p-4 mb-8">
           <p className="text-sm text-blue-800">
-            💡 <strong>Importante:</strong> Si necesitas cancelar o modificar tu cita, 
+            💡 <strong>Importante:</strong> Si necesitas cancelar o modificar tu {isRestaurant ? 'reserva' : 'cita'}, 
             por favor contáctanos con al menos 24 horas de anticipación.
           </p>
         </div>
 
+        {/* Action buttons */}
         <div className="space-y-3">
           <Button
             onClick={handleNewBooking}
             className="w-full"
             size="lg"
           >
-            Reservar otra cita
+            {isRestaurant ? 'Hacer otra reserva' : 'Reservar otra cita'}
           </Button>
           
           <Button
@@ -189,6 +204,7 @@ export function Success() {
           </Button>
         </div>
 
+        {/* Referencia de la cita */}
         {appointmentData.id && (
           <div className="mt-8 text-center">
             <p className="text-xs text-text-secondary">
