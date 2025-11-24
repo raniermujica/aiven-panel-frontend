@@ -39,11 +39,11 @@ export function ServiceCard({ service, selected, onSelect }) {
           )}
         </div>
 
-        {service.emoji && (
+        {/* {service.emoji && (
           <div className="ml-4 text-3xl">
             {service.emoji}
           </div>
-        )}
+        )} */}
       </div>
 
       {selected && (
