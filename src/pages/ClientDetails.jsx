@@ -21,7 +21,9 @@ export function ClientDetails() {
     clientEmail,
     setClientDetails,
     businessSlug,
-    resetBooking
+    resetBooking,
+    isRestaurant,
+    partySize
   } = useBookingStore();
 
   const [formData, setFormData] = useState({
@@ -35,7 +37,6 @@ export function ClientDetails() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
-  // Redirigir si no hay datos previos
   useEffect(() => {
     if (!selectedService || !selectedDate || !selectedTime) {
       navigate(`/${businessSlug}/services`);
@@ -111,10 +112,8 @@ export function ClientDetails() {
       setSubmitting(true);
       setSubmitError(null);
 
-      // Guardar datos del cliente en el store
       setClientDetails(formData.name, formData.phone, formData.email);
 
-      // ✅ CORRECCIÓN: Crear array con TODOS los servicios (principal + adicionales)
       const allServices = [
         {
           id: selectedService.id,
@@ -130,31 +129,28 @@ export function ClientDetails() {
         }))
       ];
 
-      // ✅ Calcular duración total
       const totalDuration = allServices.reduce((sum, s) => sum + s.duration_minutes, 0);
 
-      // Preparar datos de la cita
       const appointmentData = {
         clientName: formData.name,
         clientPhone: formData.phone,
         clientEmail: formData.email,
         serviceId: selectedService.id,
         serviceName: selectedService.name,           
-        durationMinutes: totalDuration, // ✅ Duración total
-        scheduledDate: format(selectedDate, 'yyyy-MM-dd'), // ✅ Cambiar key
-        appointmentTime: selectedTime, // ✅ Cambiar key
-        services: allServices, // ✅ Array completo de servicios
-        notes: notes || ''
+        durationMinutes: totalDuration,
+        scheduledDate: format(selectedDate, 'yyyy-MM-dd'),
+        appointmentTime: selectedTime,
+        services: allServices,
+        notes: notes || '',
+        ...(isRestaurant && { partySize })
       };
 
       console.log('📤 Enviando cita:', appointmentData);
 
-      // ✅ Crear la cita ANTES de navegar
       const response = await api.createAppointment(businessSlug, appointmentData);
 
       console.log('✅ Cita creada:', response);
 
-      // ✅ AHORA SÍ navegar a success
       navigate(`/${businessSlug}/success`, {
         state: {
           appointmentId: response.appointment?.id,
@@ -162,7 +158,6 @@ export function ClientDetails() {
         }
       });
 
-      // Limpiar el store después de un tiempo
       setTimeout(() => {
         resetBooking();
       }, 1000);
@@ -191,7 +186,6 @@ export function ClientDetails() {
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
 
-        {/* Botón Atrás */}
         <button
           type="button"
           onClick={() => navigate(`/${businessSlug}/date-time`)}
@@ -201,11 +195,7 @@ export function ClientDetails() {
           <span className="text-sm font-medium">Volver a horarios</span>
         </button>
 
-        {/* Intro section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
-            <User className="w-8 h-8 text-accent" />
-          </div>
           <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
             Tus datos de contacto
           </h2>
@@ -214,34 +204,36 @@ export function ClientDetails() {
           </p>
         </div>
 
-        {/* Resumen de la reserva */}
         <div className="mb-8 p-4 bg-accent-light/50 border border-accent/20 rounded-card">
           <p className="text-sm font-medium text-text-primary mb-2">Resumen de tu reserva:</p>
           <div className="space-y-1 text-sm text-text-secondary">
             <p>📅 {format(selectedDate, "EEEE, d 'de' MMMM", { locale: es })}</p>
             <p>🕐 {selectedTime}</p>
-            <p>✂️ {selectedService?.name}</p>
-            {additionalServices.length > 0 && (
-              <div className="mt-2">
-                <p className="font-medium">Servicios adicionales:</p>
-                {additionalServices.map(s => (
-                  <p key={s.id}>+ {s.name}</p>
-                ))}
-              </div>
+            {isRestaurant ? (
+              <p>👥 {partySize} {partySize === 1 ? 'persona' : 'personas'}</p>
+            ) : (
+              <>
+                <p>✂️ {selectedService?.name}</p>
+                {additionalServices.length > 0 && (
+                  <div className="mt-2">
+                    <p className="font-medium">Servicios adicionales:</p>
+                    {additionalServices.map(s => (
+                      <p key={s.id}>+ {s.name}</p>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
 
-        {/* Error de envío */}
         {submitError && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-card">
             <p className="text-sm text-red-600">{submitError}</p>
           </div>
         )}
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Nombre */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">
               Nombre completo *
@@ -263,7 +255,6 @@ export function ClientDetails() {
             )}
           </div>
 
-          {/* Teléfono */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">
               Teléfono *
@@ -285,7 +276,6 @@ export function ClientDetails() {
             )}
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium text-text-primary mb-2">
               Email *
@@ -307,7 +297,6 @@ export function ClientDetails() {
             )}
           </div>
 
-          {/* Submit button */}
           <div className="sticky bottom-6 pt-4">
             <Button
               type="submit"

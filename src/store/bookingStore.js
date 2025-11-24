@@ -2,10 +2,17 @@ import { create } from 'zustand';
 
 export const useBookingStore = create((set) => ({
   // Business data
-  businessSlug: import.meta.env.VITE_BUSINESS_SLUG,
-  businessData: null, 
+  businessSlug: null,
+  businessData: null,
+  isRestaurant: false,
+  partySize: 2,
+  
   setBusinessSlug: (slug) => set({ businessSlug: slug }),
-  setBusinessData: (data) => set({ businessData: data }), 
+  setBusinessData: (data) => set({ 
+    businessData: data,
+    isRestaurant: data?.business_type === 'restaurant'
+  }),
+  setPartySize: (size) => set({ partySize: size }),
 
   // Selected items
   selectedService: null,

@@ -4,21 +4,33 @@ import { ServiceCard } from '@/components/booking/ServiceCard';
 import { Button } from '@/components/ui/button';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { Sparkles, AlertCircle, Calendar } from 'lucide-react';
+import { AlertCircle, Calendar, Users } from 'lucide-react';
 
 export function SelectService() {
   const navigate = useNavigate();
-  const { selectedService, setService, businessSlug } = useBookingStore();
+  const { 
+    selectedService, 
+    setService, 
+    businessSlug, 
+    businessData, 
+    isRestaurant,
+    partySize,
+    setPartySize 
+  } = useBookingStore();
+  
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [localSelected, setLocalSelected] = useState(selectedService);
+  const [localPartySize, setLocalPartySize] = useState(partySize);
 
   useEffect(() => {
-    if (businessSlug) { 
-    loadServices();
+    if (businessSlug && !isRestaurant) {
+      loadServices();
+    } else if (isRestaurant) {
+      setLoading(false);
     }
-  }, [businessSlug]);
+  }, [businessSlug, isRestaurant]);
 
   const loadServices = async () => {
     try {
@@ -37,31 +49,116 @@ export function SelectService() {
   const handleSelectService = (service) => {
     setLocalSelected(service);
   };
+
   const handleContinue = () => {
-    console.log('🔍 handleContinue called');
-    console.log('🔍 localSelected:', localSelected);
-    if (localSelected) {
-      setService(localSelected);
-      console.log('🔍 Navigating to /add-ons');
-      navigate(`/${businessSlug}/add-ons`);
+    if (isRestaurant) {
+      const dummyService = {
+        id: null,
+        name: 'Reserva de Mesa',
+        duration_minutes: 90,
+        price: 0
+      };
+      setService(dummyService);
+      setPartySize(localPartySize);
+      navigate(`/${businessSlug}/date-time`);
     } else {
-      console.log('❌ No service selected');
+      if (localSelected) {
+        setService(localSelected);
+        navigate(`/${businessSlug}/add-ons`);
+      }
     }
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pt-32">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-text-secondary">Cargando servicios...</p>
+          <p className="text-text-secondary">Cargando...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
+  // ========================================
+  // VISTA PARA RESTAURANTES
+  // ========================================
+  if (isRestaurant) {
+    return (
+      <div className="min-h-screen bg-background pt-32 pb-20">
+        <div className="max-w-2xl mx-auto px-6">
+          
+          <div className="text-center mb-8">
+            <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
+              Reserva tu mesa
+            </h2>
+            <p className="text-text-secondary">
+              Selecciona el número de personas
+            </p>
+          </div>
+
+          <div className="bg-surface border border-border rounded-card shadow-sm p-6 mb-8">
+            <label className="block text-sm font-medium text-text-primary mb-3">
+              ¿Cuántas personas?
+            </label>
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => setLocalPartySize(Math.max(1, localPartySize - 1))}
+                disabled={localPartySize <= 1}
+              >
+                -
+              </Button>
+              
+              <div className="flex items-center gap-2 flex-1 justify-center">
+                <Users className="w-5 h-5 text-accent" />
+                <span className="text-3xl font-semibold text-text-primary">
+                  {localPartySize}
+                </span>
+              </div>
+              
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => setLocalPartySize(Math.min(20, localPartySize + 1))}
+                disabled={localPartySize >= 20}
+              >
+                +
+              </Button>
+            </div>
+            <p className="text-xs text-text-secondary text-center mt-3">
+              Grupos de más de 20 personas, por favor llámanos
+            </p>
+          </div>
+
+          {businessData?.description && (
+            <div className="bg-accent-light/30 border border-accent/20 rounded-card p-4 mb-8">
+              <p className="text-sm text-text-secondary">
+                {businessData.description}
+              </p>
+            </div>
+          )}
+
+          <div className="sticky bottom-6">
+            <Button
+              onClick={handleContinue}
+              className="w-full shadow-lg"
+              size="lg"
+            >
+              Continuar a fecha y hora
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================
+  // VISTA PARA BEAUTY/OTROS NICHOS
+  // ========================================
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pt-32">
@@ -79,7 +176,6 @@ export function SelectService() {
     );
   }
 
-  // Empty state
   if (services.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pt-32">
@@ -99,11 +195,8 @@ export function SelectService() {
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
-        {/* Intro section */}
+        
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
-            <Calendar className="w-8 h-8 text-accent" />
-          </div>
           <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
             ¿Qué servicio deseas reservar?
           </h2>
@@ -112,7 +205,6 @@ export function SelectService() {
           </p>
         </div>
 
-        {/* Services list */}
         <div className="space-y-4 mb-8">
           {services.map((service) => (
             <ServiceCard
@@ -124,7 +216,6 @@ export function SelectService() {
           ))}
         </div>
 
-        {/* Continue button */}
         <div className="sticky bottom-6">
           <Button
             onClick={handleContinue}
@@ -136,6 +227,6 @@ export function SelectService() {
           </Button>
         </div>
       </div>
-    // </div>
+    </div>
   );
 };

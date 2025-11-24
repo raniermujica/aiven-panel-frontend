@@ -6,8 +6,7 @@ import { ServiceCard } from '@/components/booking/ServiceCard';
 import { AdditionalServiceCard } from '@/components/booking/AdditionalServiceCard';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { Plus, FileText, AlertCircle, ArrowLeft } from 'lucide-react';
-
+import { FileText, AlertCircle, ArrowLeft } from 'lucide-react';
 
 export function AddOns() {
   const navigate = useNavigate();
@@ -18,7 +17,8 @@ export function AddOns() {
     addAdditionalService,
     removeAdditionalService,
     setNotes,
-    businessSlug
+    businessSlug,
+    isRestaurant
   } = useBookingStore();
 
   const [showServiceSelector, setShowServiceSelector] = useState(false);
@@ -27,14 +27,16 @@ export function AddOns() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Redirigir SOLO si no hay servicio seleccionado
   useEffect(() => {
     if (!selectedService) {
       navigate(`/${businessSlug}/services`);
     }
-  }, [selectedService, businessSlug, navigate]);
+    
+    if (isRestaurant) {
+      navigate(`/${businessSlug}/date-time`);
+    }
+  }, [selectedService, businessSlug, isRestaurant, navigate]);
 
-  // Cargar servicios cuando se abre el selector
   useEffect(() => {
     if (showServiceSelector && services.length === 0) {
       loadServices();
@@ -55,7 +57,6 @@ export function AddOns() {
     }
   };
 
-  // Filtrar servicios ya seleccionados
   const availableServices = services.filter(
     service => 
       service.id !== selectedService?.id && 
@@ -84,7 +85,6 @@ export function AddOns() {
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
-        {/* Botón Atrás */}
         <button
           type="button"
           onClick={() => navigate(`/${businessSlug}/services`)}
@@ -94,11 +94,7 @@ export function AddOns() {
           <span className="text-sm font-medium">Volver a servicios</span>
         </button>
         
-        {/* Intro section */}
         <div className="text-center mb-8">
-          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
-            <Plus className="w-8 h-8 text-accent" />
-          </div> */}
           <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
             ¿Deseas agregar algo más?
           </h2>
@@ -107,13 +103,11 @@ export function AddOns() {
           </p>
         </div>
 
-        {/* Additional services section */}
         <div className="mb-8">
           <h3 className="text-lg font-semibold text-text-primary mb-4">
             Servicios Adicionales
           </h3>
 
-          {/* Show added services */}
           {additionalServices.length > 0 && (
             <div className="space-y-3 mb-4">
               {additionalServices.map((service) => (
@@ -126,7 +120,6 @@ export function AddOns() {
             </div>
           )}
 
-          {/* Add service button */}
           {!showServiceSelector ? (
             <Button
               type="button"
@@ -135,7 +128,6 @@ export function AddOns() {
               className="w-full"
               size="lg"
             >
-              {/* <Plus className="w-5 h-5 mr-2" /> */}
               Agregar otro servicio
             </Button>
           ) : (
@@ -185,7 +177,6 @@ export function AddOns() {
           )}
         </div>
 
-        {/* Notes section */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-3">
             <FileText className="w-5 h-5 text-accent" />
@@ -204,7 +195,6 @@ export function AddOns() {
           />
         </div>
 
-        {/* Action buttons */}
         <div className="space-y-3">
           <Button
             type="button"

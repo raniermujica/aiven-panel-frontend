@@ -12,9 +12,11 @@ export function SelectDateTime() {
   const navigate = useNavigate();
   const { 
     selectedService,
-    additionalServices, // ← USAR para calcular duración
+    additionalServices,
     setDateTime, 
-    businessSlug 
+    businessSlug,
+    isRestaurant,
+    partySize
   } = useBookingStore();
 
   const [localDate, setLocalDate] = useState(null);
@@ -23,18 +25,15 @@ export function SelectDateTime() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Redirigir si no hay servicio
   useEffect(() => {
     if (!selectedService) {
       navigate(`/${businessSlug}/services`);
     }
   }, [selectedService, businessSlug, navigate]);
 
-  // Calcular duración total
   const totalDuration = selectedService?.duration_minutes + 
     (additionalServices?.reduce((sum, s) => sum + s.duration_minutes, 0) || 0);
 
-  // Cargar horarios cuando se selecciona una fecha
   useEffect(() => {
     if (localDate && selectedService) {
       loadAvailableSlots();
@@ -53,7 +52,7 @@ export function SelectDateTime() {
         businessSlug,
         dateStr,
         selectedService.id,
-        totalDuration // ← ENVIAR duración total
+        totalDuration
       );
 
       setAvailableSlots(data.availableSlots || []);
@@ -90,46 +89,44 @@ export function SelectDateTime() {
     <div className="min-h-screen bg-background pt-32 pb-20">
       <div className="max-w-2xl mx-auto px-6">
         
-         {/* Botón Atrás */}
         <button
           type="button"
-          onClick={() => navigate(`/${businessSlug}/add-ons`)}
+          onClick={() => navigate(`/${businessSlug}/${isRestaurant ? 'services' : 'add-ons'}`)}
           className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
           <span className="text-sm font-medium">Volver</span>
         </button>
 
-        {/* Intro section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
-            <CalendarDays className="w-8 h-8 text-accent" />
-          </div>
           <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
-            ¿Cuándo te gustaría tu cita?
+            {isRestaurant ? 'Elige tu horario' : '¿Cuándo te gustaría tu cita?'}
           </h2>
           <p className="text-text-secondary">
-            Selecciona el día y horario que mejor te convenga
+            {isRestaurant 
+              ? `Reserva para ${partySize} ${partySize === 1 ? 'persona' : 'personas'}` 
+              : 'Selecciona el día y horario que mejor te convenga'
+            }
           </p>
         </div>
 
-        {/* Services recap */}
-        <div className="mb-6 p-4 bg-accent-light/50 border border-accent/20 rounded-card">
-          <p className="text-sm text-text-secondary mb-2">Servicios seleccionados:</p>
-          <div className="space-y-1">
-            <p className="font-semibold text-text-primary">• {selectedService?.name}</p>
-            {additionalServices?.map(service => (
-              <p key={service.id} className="font-semibold text-text-primary">
-                • {service.name}
-              </p>
-            ))}
+        {!isRestaurant && (
+          <div className="mb-6 p-4 bg-accent-light/50 border border-accent/20 rounded-card">
+            <p className="text-sm text-text-secondary mb-2">Servicios seleccionados:</p>
+            <div className="space-y-1">
+              <p className="font-semibold text-text-primary">• {selectedService?.name}</p>
+              {additionalServices?.map(service => (
+                <p key={service.id} className="font-semibold text-text-primary">
+                  • {service.name}
+                </p>
+              ))}
+            </div>
+            <p className="text-sm text-text-secondary mt-2">
+              Duración total: {totalDuration} minutos
+            </p>
           </div>
-          <p className="text-sm text-text-secondary mt-2">
-            Duración total: {totalDuration} minutos
-          </p>
-        </div>
+        )}
 
-        {/* Calendar */}
         <div className="bg-surface rounded-card border border-border shadow-sm mb-6">
           <Calendar
             mode="single"
@@ -141,7 +138,6 @@ export function SelectDateTime() {
           />
         </div>
 
-        {/* Time slots */}
         {localDate && (
           <div className="space-y-6 mb-8 page-transition">
             <div className="text-center">
@@ -199,7 +195,6 @@ export function SelectDateTime() {
           </div>
         )}
 
-        {/* Continue button */}
         {localDate && localTime && (
           <div className="sticky bottom-6 page-transition">
             <Button
