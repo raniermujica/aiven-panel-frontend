@@ -4,7 +4,7 @@ import { ServiceCard } from '@/components/booking/ServiceCard';
 import { Button } from '@/components/ui/button';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, Calendar } from 'lucide-react';
 
 export function SelectService() {
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export function SelectService() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pt-32">
         <div className="text-center max-w-md mx-auto px-6">
-          {/* <Sparkles className="w-16 h-16 text-text-secondary mx-auto mb-4" /> */}
+          <Calendar className="w-16 h-16 text-text-secondary mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-text-primary mb-2">
             No hay servicios disponibles
           </h2>
@@ -102,7 +102,7 @@ export function SelectService() {
         {/* Intro section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
-            {/* <Sparkles className="w-8 h-8 text-accent" /> */}
+            <Calendar className="w-8 h-8 text-accent" />
           </div>
           <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
             ¿Qué servicio deseas reservar?
