@@ -15,7 +15,7 @@ export function Success() {
     if (!appointmentData) {
       navigate(`/${businessSlug}/services`);
     }
-  }, [appointmentData, navigate]);
+  }, [appointmentData, businessSlug, navigate]);
 
   if (!appointmentData) {
     return null;

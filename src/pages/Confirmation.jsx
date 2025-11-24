@@ -32,9 +32,9 @@ export function Confirmation() {
   // Redirigir si no hay datos completos
   useEffect(() => {
     if (!selectedService || !selectedDate || !selectedTime || !clientName || !clientPhone || !clientEmail) {
-      navigate('/services');
+      navigate(`/${businessSlug}/services`);
     }
-  }, [selectedService, selectedDate, selectedTime, clientName, clientPhone, clientEmail, navigate]);
+  }, [selectedService, selectedDate, selectedTime, clientName, clientPhone, clientEmail, businessSlug, navigate]);
 
   const bookingData = {
     selectedService,
