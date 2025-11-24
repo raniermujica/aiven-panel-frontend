@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '../components/ui/Calendar';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
-import { CalendarDays, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { CalendarDays, Clock, AlertCircle, ArrowLeft, UtensilsCrossed } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -48,13 +48,23 @@ export function SelectDateTime() {
 
       const dateStr = format(localDate, 'yyyy-MM-dd');
       
+      console.log('🔍 Llamando checkAvailability con:', {
+        businessSlug,
+        date: dateStr,
+        serviceId: selectedService.id,
+        totalDuration,
+        partySize: isRestaurant ? partySize : null
+      });
+
       const data = await api.checkAvailability(
         businessSlug,
         dateStr,
         selectedService.id,
-        totalDuration
+        totalDuration,
+        isRestaurant ? partySize : null  // ✅ ENVIAR partySize para restaurantes
       );
 
+      console.log('✅ Slots recibidos:', data.availableSlots?.length || 0);
       setAvailableSlots(data.availableSlots || []);
     } catch (err) {
       console.error('Error cargando horarios:', err);
@@ -142,7 +152,7 @@ export function SelectDateTime() {
           <div className="space-y-6 mb-8 page-transition">
             <div className="text-center">
               <p className="text-sm text-text-secondary">
-                Horarios disponibles para el{' '}
+                {isRestaurant ? 'Mesas disponibles' : 'Horarios disponibles'} para el{' '}
                 <span className="font-semibold text-text-primary">
                   {format(localDate, "EEEE, d 'de' MMMM", { locale: es })}
                 </span>
@@ -152,7 +162,9 @@ export function SelectDateTime() {
             {loading ? (
               <div className="text-center py-8">
                 <div className="w-8 h-8 border-4 border-accent/30 border-t-accent rounded-full animate-spin mx-auto mb-3" />
-                <p className="text-sm text-text-secondary">Cargando horarios...</p>
+                <p className="text-sm text-text-secondary">
+                  {isRestaurant ? 'Verificando disponibilidad de mesas...' : 'Cargando horarios...'}
+                </p>
               </div>
             ) : error ? (
               <div className="text-center py-8">
@@ -183,13 +195,25 @@ export function SelectDateTime() {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Clock className="w-12 h-12 text-text-secondary mx-auto mb-3 opacity-50" />
+                {isRestaurant ? (
+                  <UtensilsCrossed className="w-12 h-12 text-text-secondary mx-auto mb-3 opacity-50" />
+                ) : (
+                  <Clock className="w-12 h-12 text-text-secondary mx-auto mb-3 opacity-50" />
+                )}
                 <p className="font-medium text-text-primary mb-1">
-                  No hay horarios disponibles
+                  {isRestaurant ? 'No hay mesas disponibles' : 'No hay horarios disponibles'}
                 </p>
                 <p className="text-sm text-text-secondary">
-                  Por favor, selecciona otra fecha.
+                  {isRestaurant 
+                    ? `No tenemos mesas disponibles para ${partySize} ${partySize === 1 ? 'persona' : 'personas'} en esta fecha.`
+                    : 'Por favor, selecciona otra fecha.'
+                  }
                 </p>
+                {isRestaurant && (
+                  <p className="text-xs text-text-secondary mt-2">
+                    Intenta con otra fecha o contáctanos directamente.
+                  </p>
+                )}
               </div>
             )}
           </div>
