@@ -22,13 +22,26 @@ function BookingApp() {
   }, [slug]);
 
   const loadBusinessData = async (businessSlug) => {
-    try {
-      const response = await api.getBusinessInfo(businessSlug);
-      setBusinessData(response.business);
-    } catch (error) {
-      console.error('Error cargando datos del negocio:', error);
-    }
-  };
+  try {
+    console.log('📥 Cargando info del negocio:', businessSlug);
+    const response = await api.getBusinessInfo(businessSlug);
+    console.log('✅ Respuesta de la API:', response);
+    console.log('🏢 Business data:', response.business);
+    console.log('🍽️ Business type:', response.business?.business_type);
+    setBusinessData(response.business);
+  } catch (error) {
+    console.error('❌ Error cargando datos del negocio:', error);
+  }
+};
+
+  // const loadBusinessData = async (businessSlug) => {
+  //   try {
+  //     const response = await api.getBusinessInfo(businessSlug);
+  //     setBusinessData(response.business);
+  //   } catch (error) {
+  //     console.error('Error cargando datos del negocio:', error);
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-background">

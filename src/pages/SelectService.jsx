@@ -25,20 +25,39 @@ export function SelectService() {
   const [localPartySize, setLocalPartySize] = useState(partySize);
 
   // ✅ CORRECCIÓN: Esperar a que businessData esté cargado
-  useEffect(() => {
-    if (!businessData) {
-      // Aún no tenemos datos del negocio, seguir esperando
-      return;
-    }
+  // useEffect(() => {
+  //   if (!businessData) {
+  //     // Aún no tenemos datos del negocio, seguir esperando
+  //     return;
+  //   }
 
-    if (isRestaurant) {
-      // Si es restaurante, no cargar servicios
-      setLoading(false);
-    } else if (businessSlug) {
-      // Si es beauty, cargar servicios
-      loadServices();
-    }
-  }, [businessSlug, isRestaurant, businessData]);
+  //   if (isRestaurant) {
+  //     // Si es restaurante, no cargar servicios
+  //     setLoading(false);
+  //   } else if (businessSlug) {
+  //     // Si es beauty, cargar servicios
+  //     loadServices();
+  //   }
+  // }, [businessSlug, isRestaurant, businessData]);
+
+  useEffect(() => {
+  console.log('🔍 DEBUG businessData:', businessData);
+  console.log('🔍 DEBUG isRestaurant:', isRestaurant);
+  console.log('🔍 DEBUG businessSlug:', businessSlug);
+  
+  if (!businessData) {
+    console.log('⏳ Esperando businessData...');
+    return;
+  }
+
+  if (isRestaurant) {
+    console.log('✅ Es restaurante - NO cargar servicios');
+    setLoading(false);
+  } else if (businessSlug) {
+    console.log('✅ Es beauty - Cargar servicios');
+    loadServices();
+  }
+}, [businessSlug, isRestaurant, businessData]);
 
   const loadServices = async () => {
     try {
