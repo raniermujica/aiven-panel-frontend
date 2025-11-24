@@ -101,7 +101,7 @@ export function SelectService() {
       <div className="max-w-2xl mx-auto px-6">
         {/* Intro section */}
         <div className="text-center mb-8">
-          {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4"> */}
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-accent-light rounded-full mb-4">
             {/* <Sparkles className="w-8 h-8 text-accent" /> */}
           </div>
           <h2 className="text-2xl md:text-3xl font-semibold text-text-primary mb-2">
