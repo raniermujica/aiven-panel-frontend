@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, Calendar, Clock, Mail, Phone, Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useBookingStore } from '../store/bookingStore'; 
 
 export function Success() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { businessSlug, resetBooking } = useBookingStore(); 
   const appointmentData = location.state?.appointmentData;
 
   // Redirigir si no hay datos de la cita
@@ -24,6 +26,11 @@ export function Success() {
   // Parsear fecha correctamente
   const appointmentDate = new Date(appointmentData.date || appointmentData.appointment_time);
   const appointmentTime = appointmentData.time || format(appointmentDate, 'HH:mm');
+
+  const handleNewBooking = () => {
+    resetBooking();
+    navigate(`/${businessSlug}/services`); 
+  };
 
   return (
     <div className="min-h-screen bg-background pt-32 pb-20">
@@ -146,7 +153,7 @@ export function Success() {
         {/* Action buttons */}
         <div className="space-y-3">
           <Button
-            onClick={() => navigate('/services')}
+            onClick={handleNewBooking} 
             className="w-full"
             size="lg"
           >
@@ -154,7 +161,7 @@ export function Success() {
           </Button>
           
           <Button
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = `/${businessSlug}`} 
             variant="outline"
             className="w-full"
             size="lg"

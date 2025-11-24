@@ -113,31 +113,49 @@ export function ClientDetails() {
 
       // Guardar datos del cliente en el store
       setClientDetails(formData.name, formData.phone, formData.email);
-      navigate(`/${businessSlug}/success`);
+
+      // ✅ CORRECCIÓN: Crear array con TODOS los servicios (principal + adicionales)
+      const allServices = [
+        {
+          id: selectedService.id,
+          name: selectedService.name,
+          duration_minutes: selectedService.duration_minutes,
+          price: selectedService.price || 0
+        },
+        ...additionalServices.map(s => ({
+          id: s.id,
+          name: s.name,
+          duration_minutes: s.duration_minutes,
+          price: s.price || 0
+        }))
+      ];
+
+      // ✅ Calcular duración total
+      const totalDuration = allServices.reduce((sum, s) => sum + s.duration_minutes, 0);
 
       // Preparar datos de la cita
       const appointmentData = {
-        customerName: formData.name,
-        customerPhone: formData.phone,
-        customerEmail: formData.email,
+        clientName: formData.name,
+        clientPhone: formData.phone,
+        clientEmail: formData.email,
         serviceId: selectedService.id,
         serviceName: selectedService.name,           
-        durationMinutes: selectedService.duration_minutes, 
-        date: format(selectedDate, 'yyyy-MM-dd'),
-        time: selectedTime,
-        notes: notes || '',
-        additionalServices: additionalServices.map(s => ({
-          id: s.id,
-          name: s.name,
-          duration_minutes: s.duration_minutes
-        })),
+        durationMinutes: totalDuration, // ✅ Duración total
+        scheduledDate: format(selectedDate, 'yyyy-MM-dd'), // ✅ Cambiar key
+        appointmentTime: selectedTime, // ✅ Cambiar key
+        services: allServices, // ✅ Array completo de servicios
+        notes: notes || ''
       };
 
-      // Crear la cita
+      console.log('📤 Enviando cita:', appointmentData);
+
+      // ✅ Crear la cita ANTES de navegar
       const response = await api.createAppointment(businessSlug, appointmentData);
 
-      // Redirigir a página de éxito
-      navigate('/success', {
+      console.log('✅ Cita creada:', response);
+
+      // ✅ AHORA SÍ navegar a success
+      navigate(`/${businessSlug}/success`, {
         state: {
           appointmentId: response.appointment?.id,
           appointmentData: response.appointment
@@ -150,8 +168,9 @@ export function ClientDetails() {
       }, 1000);
 
     } catch (error) {
-      console.error('Error creando cita:', error);
+      console.error('❌ Error creando cita:', error);
       setSubmitError(
+        error.response?.data?.error ||
         error.response?.data?.message ||
         'Error al crear la cita. Por favor, intenta de nuevo.'
       );
@@ -203,9 +222,12 @@ export function ClientDetails() {
             <p>🕐 {selectedTime}</p>
             <p>✂️ {selectedService?.name}</p>
             {additionalServices.length > 0 && (
-              <p className="mt-2">
-                + {additionalServices.length} servicio(s) adicional(es)
-              </p>
+              <div className="mt-2">
+                <p className="font-medium">Servicios adicionales:</p>
+                {additionalServices.map(s => (
+                  <p key={s.id}>+ {s.name}</p>
+                ))}
+              </div>
             )}
           </div>
         </div>
