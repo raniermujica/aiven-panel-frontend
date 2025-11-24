@@ -24,13 +24,21 @@ export function SelectService() {
   const [localSelected, setLocalSelected] = useState(selectedService);
   const [localPartySize, setLocalPartySize] = useState(partySize);
 
+  // ✅ CORRECCIÓN: Esperar a que businessData esté cargado
   useEffect(() => {
-    if (businessSlug && !isRestaurant) {
-      loadServices();
-    } else if (isRestaurant) {
-      setLoading(false);
+    if (!businessData) {
+      // Aún no tenemos datos del negocio, seguir esperando
+      return;
     }
-  }, [businessSlug, isRestaurant]);
+
+    if (isRestaurant) {
+      // Si es restaurante, no cargar servicios
+      setLoading(false);
+    } else if (businessSlug) {
+      // Si es beauty, cargar servicios
+      loadServices();
+    }
+  }, [businessSlug, isRestaurant, businessData]);
 
   const loadServices = async () => {
     try {
@@ -69,7 +77,8 @@ export function SelectService() {
     }
   };
 
-  if (loading) {
+  // ✅ CORRECCIÓN: Mostrar loading mientras cargamos businessData
+  if (!businessData || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pt-32">
         <div className="text-center">
