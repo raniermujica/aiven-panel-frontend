@@ -53,21 +53,25 @@ async getBusinessInfo(businessSlug) {
   }
 
   // Crear cita 
-  async createAppointment(businessSlug, appointmentData) {
- try {
-    // Preparar el payload con el formato correcto
+ async createAppointment(businessSlug, appointmentData) {
+  try {
+    console.log('📤 Datos recibidos en API:', appointmentData);
+
+    // ✅ CORRECCIÓN: Usar las keys correctas
     const payload = {
-      clientName: appointmentData.customerName,
-      clientPhone: appointmentData.customerPhone,
-      clientEmail: appointmentData.customerEmail,
+      clientName: appointmentData.clientName,        
+      clientPhone: appointmentData.clientPhone,      
+      clientEmail: appointmentData.clientEmail,      
       serviceId: appointmentData.serviceId,
       serviceName: appointmentData.serviceName,  
       durationMinutes: appointmentData.durationMinutes, 
-      scheduledDate: `${appointmentData.date}T${appointmentData.time}:00`,
-      appointmentTime: `${appointmentData.date}T${appointmentData.time}:00`,
-      services: appointmentData.additionalServices || [], 
+      scheduledDate: appointmentData.scheduledDate,  
+      appointmentTime: appointmentData.appointmentTime, 
+      services: appointmentData.services || [],      
       notes: appointmentData.notes || '',
     };
+
+    console.log('📤 Payload enviado:', payload);
 
     const response = await this.client.post(
       `/api/public/${businessSlug}/appointments`,
@@ -78,7 +82,7 @@ async getBusinessInfo(businessSlug) {
     console.error('Error creando cita:', error);
     throw error;
   }
-  }
 }
+};
 
 export const api = new APIService();
