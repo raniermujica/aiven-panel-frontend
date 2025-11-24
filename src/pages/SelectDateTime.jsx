@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar } from '../components/ui/Calendar';
 import { useBookingStore } from '@/store/bookingStore';
 import { api } from '@/services/api';
 import { CalendarDays, Clock, AlertCircle, ArrowLeft } from 'lucide-react';
