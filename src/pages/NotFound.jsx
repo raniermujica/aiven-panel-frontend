@@ -10,9 +10,9 @@ export function NotFound() {
         <p className="text-muted-foreground mb-8">
           El enlace que intentas acceder no existe o ha sido deshabilitado.
         </p>
-        <Button onClick={() => window.location.href = 'https://agentpaul.es'}>
+        {/* <Button onClick={() => window.location.href = 'https://agentpaul.es'}>
           Ir a AgentPaul
-        </Button>
+        </Button> */}
       </div>
     </div>
   );
