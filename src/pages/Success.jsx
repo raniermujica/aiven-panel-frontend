@@ -13,7 +13,7 @@ export function Success() {
   // Redirigir si no hay datos de la cita
   useEffect(() => {
     if (!appointmentData) {
-      navigate('/services');
+      navigate(`/${businessSlug}/services`);
     }
   }, [appointmentData, navigate]);
 

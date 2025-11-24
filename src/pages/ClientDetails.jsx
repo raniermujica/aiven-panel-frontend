@@ -38,9 +38,9 @@ export function ClientDetails() {
   // Redirigir si no hay datos previos
   useEffect(() => {
     if (!selectedService || !selectedDate || !selectedTime) {
-      navigate('/services');
+      navigate(`/${businessSlug}/services`);
     }
-  }, [selectedService, selectedDate, selectedTime, navigate]);
+  }, [selectedService, selectedDate, businessSlug, selectedTime, navigate]);
 
   const validateField = (name, value) => {
     switch (name) {
@@ -113,6 +113,7 @@ export function ClientDetails() {
 
       // Guardar datos del cliente en el store
       setClientDetails(formData.name, formData.phone, formData.email);
+      navigate(`/${businessSlug}/success`);
 
       // Preparar datos de la cita
       const appointmentData = {
@@ -174,7 +175,7 @@ export function ClientDetails() {
         {/* Botón Atrás */}
         <button
           type="button"
-          onClick={() => navigate('/date-time')}
+          onClick={() => navigate(`/${businessSlug}/date-time`)}
           className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
         >
           <ArrowLeft className="w-5 h-5" />

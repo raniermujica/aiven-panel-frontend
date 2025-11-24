@@ -26,9 +26,9 @@ export function SelectDateTime() {
   // Redirigir si no hay servicio
   useEffect(() => {
     if (!selectedService) {
-      navigate('/services');
+      navigate(`/${businessSlug}/services`);
     }
-  }, [selectedService, navigate]);
+  }, [selectedService, businessSlug, navigate]);
 
   // Calcular duración total
   const totalDuration = selectedService?.duration_minutes + 
@@ -78,7 +78,7 @@ export function SelectDateTime() {
   const handleContinue = () => {
     if (localDate && localTime) {
       setDateTime(localDate, localTime);
-      navigate('/client-details'); // ← Ir a client-details
+      navigate(`/${businessSlug}/client-details`); 
     }
   };
 
@@ -93,7 +93,7 @@ export function SelectDateTime() {
          {/* Botón Atrás */}
         <button
           type="button"
-          onClick={() => navigate('/add-ons')}
+          onClick={() => navigate(`/${businessSlug}/add-ons`)}
           className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
         >
           <ArrowLeft className="w-5 h-5" />

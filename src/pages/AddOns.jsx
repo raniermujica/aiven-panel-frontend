@@ -30,9 +30,9 @@ export function AddOns() {
   // Redirigir SOLO si no hay servicio seleccionado
   useEffect(() => {
     if (!selectedService) {
-      navigate('/services');
+      navigate(`/${businessSlug}/services`);
     }
-  }, [selectedService, navigate]);
+  }, [selectedService, businessSlug, navigate]);
 
   // Cargar servicios cuando se abre el selector
   useEffect(() => {
@@ -73,12 +73,12 @@ export function AddOns() {
 
   const handleContinue = () => {
     setNotes(localNotes);
-    navigate('/date-time');
+    navigate(`/${businessSlug}/date-time`);
   };
 
   const handleSkip = () => {
     setNotes('');
-    navigate('/date-time');
+    navigate(`/${businessSlug}/date-time`);
   };
 
   return (
@@ -87,7 +87,7 @@ export function AddOns() {
         {/* Botón Atrás */}
         <button
           type="button"
-          onClick={() => navigate('/services')}
+          onClick={() => navigate(`/${businessSlug}/services`)}
           className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-6"
         >
           <ArrowLeft className="w-5 h-5" />

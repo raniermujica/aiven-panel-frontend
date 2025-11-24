@@ -15,8 +15,10 @@ export function SelectService() {
   const [localSelected, setLocalSelected] = useState(selectedService);
 
   useEffect(() => {
+    if (businessSlug) { 
     loadServices();
-  }, []);
+    }
+  }, [businessSlug]);
 
   const loadServices = async () => {
     try {
@@ -41,7 +43,7 @@ export function SelectService() {
     if (localSelected) {
       setService(localSelected);
       console.log('🔍 Navigating to /add-ons');
-      navigate('/add-ons');
+      navigate(`/${businessSlug}/add-ons`);
     } else {
       console.log('❌ No service selected');
     }
